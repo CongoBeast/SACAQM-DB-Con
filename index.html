@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.min.js"></script>
+        <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    </head>
+
+
+
+    <script>
+        
+        function load_sensors(){
+            let urlParams = new URLSearchParams(window.location.search);
+            let sensor_id = (urlParams.has("sensor_id")?urlParams.get("sensor_id"):"351358811387312");
+
+            var sensorList = []
+
+            $.ajax({
+                url: 'https://sacaqm.web.cern.ch/dbread.php',
+                type: 'get',
+                data: {cmd:"get_sensors"},
+                success: function(data) {
+                //console.log(data);  
+                sensors=JSON.parse(data);
+                
+                for(sensor of sensors){
+
+                    sensorList.push(sensor["sensor_id"])
+                }
+                
+                }
+            }); 
+
+            console.log(sensorList)
+            return sensorList;
+        }
+
+
+        function getData(request) {
+                        
+
+                        var returnedData;
+                        var p;
+                        var dates = [];
+                        var pm1p0 = [];
+                        var pm2p5 = [];
+                        var pm4p0 = [];
+                        var pm10p0 = [];
+                        var humidity = [];
+                        var temperature = [];
+                        var nox = [];
+                        var voc = [];
+                        var singleDataArray  = [];
+                        var i;
+
+                        $.ajax({
+                            url: "https://sacaqm.web.cern.ch/dbread.php",
+                            type: "get",
+                            data: request,
+                            success: function (data) {
+                            // console.log(data);
+                            var points = JSON.parse(data);
+
+                            for (p of points) {
+                                dates.push(p["timestamp"]);
+                                var date = new Date();
+                                date.setFullYear(parseInt(p["timestamp"].split(" ")[0].split("-")[0]));
+                                date.setMonth(parseInt(p["timestamp"].split(" ")[0].split("-")[1]) - 1);
+                                date.setDate(parseInt(p["timestamp"].split(" ")[0].split("-")[2]));
+                                date.setHours(parseInt(p["timestamp"].split(" ")[1].split(":")[0]));
+                                date.setMinutes(parseInt(p["timestamp"].split(" ")[1].split(":")[1]));
+                                date.setSeconds(parseInt(p["timestamp"].split(" ")[1].split(":")[2]));
+                                pm1p0.push({ x: date.getTime(), y: parseFloat(p["pm1p0"]) });
+                                pm2p5.push({ x: date.getTime(), y: parseFloat(p["pm2p5"]) });
+                                pm4p0.push({ x: date.getTime(), y: parseFloat(p["pm4p0"]) });
+                                pm10p0.push({ x: date.getTime(), y: parseFloat(p["pm10p0"]) });
+                                nox.push({ x: date.getTime(), y: parseFloat(p["nox"]) });
+                                voc.push({ x: date.getTime(), y: parseFloat(p["voc"]) });
+                                humidity.push({ x: date.getTime(), y: parseFloat(p["humidity"]) });
+                                temperature.push({
+                                x: date.getTime(),
+                                y: parseFloat(p["temperature"]),
+                                });
+
+                            }
+
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                            // Log the error details here
+                            console.error("Error:", textStatus, errorThrown);
+                            console.error("Request:", jqXHR.responseText);
+                            },
+                        });
+
+                        // calculation of the averages and other data must take place here.
+                        // console.log(sPm1p0)
+                        console.log(sVoc)
+
+                        return { dates, pm1p0, pm2p5, pm4p0, pm10p0, temperature, humidity , voc , nox };
+            }
+
+            function requestData(sensorId , period) {
+                var request = { cmd: "get_sen55" };
+
+                if(period === "Today"){
+                    var date = new Date();
+                    date.setDate(date.getDate()-0.5);
+                    request["from"]=formatDate(date);
+                    request["from"]+=" "+date.getHours()+":"+(date.getMinutes()<10?"0":"")+date.getMinutes()+":"+(date.getSeconds()<10?"0":"")+date.getSeconds();
+                    
+                }
+                else if(period === "7Days"){
+                    var date = new Date();
+                    date.setDate(date.getDate()-7);
+                    request["from"]=formatDate(date);
+                }
+                else if(period === "LastDay"){
+                    var date = new Date();
+                    date.setDate(date.getDate()-1);
+                    request["from"]=formatDate(date);
+
+                }
+                else{
+                    var date = new Date();
+                    date.setDate(date.getDate()-30);
+                    request["from"]=formatDate(date);
+                }
+
+                request["sensor_id"] = sensorId;
+
+                return request;
+            }
+
+            var listSensors = load_sensors()
+            var sensor;
+            console.log(listSensors.length)
+
+            for (let i = 0; i < listSensors.length; i++){
+
+                console.log("sensor")
+
+        }
+
+
+
+
+    </script>
+</html>
